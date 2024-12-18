@@ -1,7 +1,10 @@
+from http.cookiejar import month
 from itertools import count
 
 import pandas as pd
 import toolz as t
+
+from mongo_db.models.date_model import Date
 from mongo_db.models.event_model import Event
 from mongo_db.models.location_model import Location
 from mongo_db.models.target_type_model import TargetType
@@ -52,10 +55,6 @@ def process_csv(file_path: str) -> List[Event]:
         .fillna(0)
         .where(df[["nperps", "nkill", "nwound"]] > 0, 0)
     )
-
-    print(5)
-    print(df[["iyear", "imonth", 'iday']])
-
     df.rename(columns={
         'eventid': 'event_id',
         'iyear': 'year',
@@ -68,7 +67,6 @@ def process_csv(file_path: str) -> List[Event]:
         'longitude': 'longitude',
         'nkill': 'num_kill',
         'nwound': 'num_wound',
-        "npreps" : "num_preps"
     }, inplace=True)
 
     # Filter necessary columns
@@ -83,14 +81,15 @@ def process_csv(file_path: str) -> List[Event]:
             latitude=row['latitude'],
             longitude=row['longitude']
         )
-
+        print("cgeck")
         event = Event(
             event_id=str(row['event_id']),
             num_kill=int(row['num_kill']) ,
             num_wound=int(row['num_wound']),
             number_of_casualties_calc=int(row['num_wound']) * 1 + int(row['num_kill']) * 2,
-            date=f"{row['day']}/{row['month']}/{row['year']}",
-            num_preps=row["num_preps"],
+            date=Date(day=row['day'], month=row['month'], year=row['year']),
+            summary=row["summary"],
+            num_preps=row["nperps"],
             location=location,
             attack_type=convert_to_attack_type(row),
             target_types=convert_to_target_types(row),
@@ -101,4 +100,4 @@ def process_csv(file_path: str) -> List[Event]:
 
     return events
 
-process_csv("../data/globalterrorismdb_0718dist-1000 rows.csv")
+print(process_csv("../data/globalterrorismdb_0718dist-1000 rows.csv")[0])
